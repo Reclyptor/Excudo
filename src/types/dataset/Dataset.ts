@@ -5,11 +5,11 @@ import {Category} from "./Category";
 import {Annotation} from "./Annotation";
 
 export interface Dataset {
-    info: Info;
-    licenses: License[];
-    images: Image[];
-    categories: Category[];
-    annotations: Annotation[];
+    info?: Info;
+    licenses?: License[];
+    images?: Image[];
+    categories?: Category[];
+    annotations?: Annotation[];
 }
 
 export class Dataset implements Dataset {

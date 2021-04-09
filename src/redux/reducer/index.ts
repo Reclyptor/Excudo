@@ -1,8 +1,8 @@
-import {State} from "../store";
-import {Action} from "../action";
+import {combineReducers} from "redux";
+import datasetReducer from "./Dataset";
 
-const rootReducer = (state: State = {}, action: Action<any>) => {
-    return state;
-};
+const rootReducer = combineReducers({
+    dataset: datasetReducer
+});
 
 export default rootReducer;
