@@ -5,11 +5,15 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import {Provider} from "react-redux";
 import store from "./redux/store";
+import Excudo from "./themes/Excudo";
+import { ThemeProvider } from '@material-ui/core/styles';
 
 ReactDOM.render(
     <React.StrictMode>
         <Provider store={store}>
-            <App />
+            <ThemeProvider theme={Excudo}>
+                <App />
+            </ThemeProvider>
         </Provider>
     </React.StrictMode>,
     document.getElementById('root')
