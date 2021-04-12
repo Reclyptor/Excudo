@@ -1,11 +1,12 @@
 import React from 'react';
+import Canvas from "../component/Canvas";
 
 type AnnotatorNodeProps = {
 
 };
 
 const AnnotatorNode = (_: AnnotatorNodeProps) => {
-    return <></>
+    return <Canvas/>;
 };
 
 export default AnnotatorNode;
