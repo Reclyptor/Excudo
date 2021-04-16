@@ -66,15 +66,11 @@ const Canvas = (props: CanvasProps) => {
     };
 
     useEffect(() => {
-        if (editor?.canvas) {
-            const imageSrc = (index: number): string => {
-                if (props.images.length > 0) {
-                    const idx: number = Math.max(0, Math.min(index, props.images.length - 1));
-                    return props.images[idx].coco_url;
-                }
-                return "";
-            };
-            editor?.canvas.setBackgroundImage(imageSrc(imageIndex), editor?.canvas.renderAll.bind(editor?.canvas));
+        if (editor?.canvas && props.images.length > 0) {
+            const idx: number = Math.max(0, Math.min(imageIndex, props.images.length - 1));
+            editor?.canvas.setWidth(props.images[idx].width);
+            editor?.canvas.setHeight(props.images[idx].height);
+            editor?.canvas.setBackgroundImage(props.images[idx].coco_url, editor?.canvas.renderAll.bind(editor?.canvas));
         }
     }, [editor?.canvas, imageIndex, props.images]);
 
