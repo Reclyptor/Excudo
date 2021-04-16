@@ -23,6 +23,8 @@ type SplitButtonProps = {
     deleteObjects(): void;
     zoomIn(): void;
     zoomOut(): void;
+    previousImage(): void;
+    nextImage(): void;
 };
 
 const CanvasButtons = (props: SplitButtonProps) => {
@@ -64,11 +66,11 @@ const CanvasButtons = (props: SplitButtonProps) => {
         <Grid container direction="column" alignItems="center">
             <Grid item xs={12}>
                 <ButtonGroup disableElevation variant="contained" color="primary" ref={anchorRef}>
-                    <Button color={"primary"} variant={"contained"}><ArrowLeftIcon/></Button>
+                    <Button color={"primary"} variant={"contained"} onClick={props.previousImage}><ArrowLeftIcon/></Button>
                     <Button color={"primary"} variant={"contained"} onClick={addShape}>{renderToolButton()}</Button>
                     <Button color={"primary"} variant={"contained"} onClick={handleToggle} size={"small"}><ArrowDropDownIcon/></Button>
                     <Button color={"primary"} variant={"contained"} onClick={props.deleteObjects}><DeleteIcon/></Button>
-                    <Button color={"primary"} variant={"contained"}><ArrowRightIcon/></Button>
+                    <Button color={"primary"} variant={"contained"} onClick={props.nextImage}><ArrowRightIcon/></Button>
                 </ButtonGroup>
                 <Popper open={open} anchorEl={anchorRef.current} role={undefined} transition disablePortal>
                     <Paper>
