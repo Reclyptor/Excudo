@@ -4,7 +4,10 @@ import { FabricJSCanvas, useFabricJSEditor } from 'fabricjs-react';
 import { Annotation } from "../../types/dataset/Annotation";
 import { Image } from "../../types/dataset/Image";
 import CanvasButtons from "./CanvasButtons";
-import {Object} from "fabric/fabric-impl";
+import { Object } from "fabric/fabric-impl";
+import { createRectangle } from "../../types/canvas/Rectangle";
+import { createCircle } from "../../types/canvas/Circle";
+import { nextAnnotationID } from "../../types/dataset/Annotation";
 
 const DEFAULT_WIDTH = 50;
 const DEFAULT_HEIGHT = 50;
@@ -12,61 +15,68 @@ const DEFAULT_HEIGHT = 50;
 type CanvasProps = {
     images: Image[];
     annotations: Annotation[];
+    addAnnotation(_: Annotation): void;
 };
 
 const Canvas = (props: CanvasProps) => {
     const { selectedObjects, editor, onReady } = useFabricJSEditor()
     const [imageIndex, setImageIndex] = useState<number>(0);
 
+    const nextImage = () => setImageIndex((idx: number) => normalizeIndex(idx + 1));
+    const normalizeIndex = (idx: number) => Math.max(0, Math.min(idx, props.images.length - 1));
+    const previousImage = () => setImageIndex((idx: number) => normalizeIndex(idx - 1));
+    const zoomIn = () => editor?.zoomIn();
+    const zoomOut = () => editor?.zoomOut();
+
     const init = (canvas: fabric.Canvas) => {
         canvas.uniformScaling = false;
         onReady(canvas);
     };
 
+    const addBoundingBox = (annotation: Annotation) => {
+        if (editor) {
+            const rectangle = createRectangle(
+                nextAnnotationID(props.annotations),
+                annotation.bbox[0],
+                annotation.bbox[1],
+                annotation.bbox[2],
+                annotation.bbox[3]
+            );
+            editor.canvas.add(rectangle);
+        }
+    };
+
     const addRectangle = () => {
         if (editor) {
-            const rectangle = new fabric.Rect({
-                originX: "left",
-                originY: "top",
-                fill: "transparent",
-                stroke: "#992C7E",
-                left: ((editor.canvas.width || 0) - DEFAULT_WIDTH) / 2,
-                top: ((editor.canvas.height || 0) - DEFAULT_HEIGHT) / 2,
-                width: DEFAULT_WIDTH,
-                height: DEFAULT_HEIGHT,
-                hasBorders: false,
-                lockRotation: true,
-                strokeUniform: true,
-            });
-            rectangle.setControlVisible("mtr", false);
-            editor.canvas.add(rectangle);
+            const annotation: Annotation = {
+                id: nextAnnotationID(props.annotations),
+                image_id: props.images[imageIndex]?.id || 0,
+                category_id: 0,
+                area: DEFAULT_WIDTH * DEFAULT_HEIGHT,
+                iscrowd: 0,
+                bbox: [
+                    ((editor.canvas.width || 0) - DEFAULT_WIDTH) / 2,
+                    ((editor.canvas.height || 0) - DEFAULT_HEIGHT) / 2,
+                    DEFAULT_WIDTH,
+                    DEFAULT_HEIGHT
+                ],
+                segmentation: []
+            };
+            props.addAnnotation(annotation);
         }
     };
 
     const addCircle = () => {
         if (editor) {
-            const circle = new fabric.Circle({
-                originX: "center",
-                originY: "center",
-                fill: "transparent",
-                stroke: "#992C7E",
-                left: (editor.canvas.width || 0) / 2,
-                top: (editor.canvas.height || 0) / 2,
-                radius: 25,
-                hasBorders: false,
-                lockRotation: true,
-                strokeUniform: true,
-            });
-            circle.setControlVisible("mtr", false);
+            const circle = createCircle(
+                nextAnnotationID(props.annotations),
+                (editor.canvas.width || 0) / 2,
+                (editor.canvas.height || 0) / 2,
+                25
+            );
             editor.canvas.add(circle);
         }
     };
-
-    const zoomIn = () => editor?.zoomIn();
-    const zoomOut = () => editor?.zoomOut();
-    const normalizeIndex = (idx: number) => Math.max(0, Math.min(idx, props.images.length - 1));
-    const previousImage = () => setImageIndex((idx: number) => normalizeIndex(idx - 1));
-    const nextImage = () => setImageIndex((idx: number) => normalizeIndex(idx + 1));
 
     const deleteObjects = () => {
         if ((selectedObjects?.length || 0) > 0) {
@@ -92,23 +102,7 @@ const Canvas = (props: CanvasProps) => {
             props.annotations.filter((annotation: Annotation) => annotation.image_id === image.id)
                 .filter((annotation: Annotation) => annotation.bbox !== undefined)
                 .filter((annotation: Annotation) => annotation.bbox.length === 4)
-                .forEach((annotation: Annotation) => {
-                    const rectangle = new fabric.Rect({
-                        originX: "left",
-                        originY: "top",
-                        fill: "transparent",
-                        stroke: "#992C7E",
-                        left: annotation.bbox[0],
-                        top: annotation.bbox[1],
-                        width: annotation.bbox[2],
-                        height: annotation.bbox[3],
-                        hasBorders: false,
-                        lockRotation: true,
-                        strokeUniform: true,
-                    });
-                    rectangle.setControlVisible("mtr", false);
-                    editor?.canvas.add(rectangle);
-                });
+                .forEach(addBoundingBox);
         }
     };
 

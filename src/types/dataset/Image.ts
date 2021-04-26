@@ -14,3 +14,8 @@ export class Image implements Image {
         Object.assign(this, image);
     }
 }
+
+export const nextImageID = (images?: Image[]) => {
+    return 1 + (images || [])
+        .reduce((prev: number, curr: Image) => Math.max(prev, curr.id), 0);
+};

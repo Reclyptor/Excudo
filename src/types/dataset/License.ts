@@ -9,3 +9,8 @@ export class License implements License {
         Object.assign(this, license);
     }
 }
+
+export const nextLicenseID = (licenses?: License[]) => {
+    return 1 + (licenses || [])
+        .reduce((prev: number, curr: License) => Math.max(prev, curr.id), 0);
+};

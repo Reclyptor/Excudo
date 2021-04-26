@@ -13,3 +13,8 @@ export class Annotation implements Annotation {
         Object.assign(this, annotation);
     }
 }
+
+export const nextAnnotationID = (annotations?: Annotation[]) => {
+    return 1 + (annotations || [])
+        .reduce((prev: number, curr: Annotation) => Math.max(prev, curr.id), 0);
+};
