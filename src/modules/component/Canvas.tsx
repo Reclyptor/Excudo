@@ -16,6 +16,7 @@ type CanvasProps = {
     images: Image[];
     annotations: Annotation[];
     addAnnotation(_: Annotation): void;
+    updateAnnotation(_: Annotation): void;
 };
 
 const Canvas = (props: CanvasProps) => {
@@ -42,6 +43,19 @@ const Canvas = (props: CanvasProps) => {
                 annotation.bbox[2],
                 annotation.bbox[3]
             );
+            const update = (e: fabric.IEvent) => {
+                props.updateAnnotation({
+                    ...annotation,
+                    bbox: [
+                        e.target?.left || ((editor.canvas.width || 0) - DEFAULT_WIDTH) / 2,
+                        e.target?.top || ((editor.canvas.height || 0) - DEFAULT_HEIGHT) / 2,
+                        (e.target?.width || DEFAULT_WIDTH) * (e.target?.scaleX || 1),
+                        (e.target?.height || DEFAULT_HEIGHT) * (e.target?.scaleY || 1)
+                    ]
+                });
+            };
+            rectangle.on("moved", update);
+            rectangle.on("scaled", update);
             editor.canvas.add(rectangle);
         }
     };

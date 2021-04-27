@@ -5,16 +5,17 @@ import { Dispatch } from "redux";
 import { connect } from "react-redux";
 import { Image } from "../../types/dataset/Image";
 import { Annotation } from "../../types/dataset/Annotation";
-import { addAnnotation } from "../../redux/action/Annotation";
+import { addAnnotation, updateAnnotation } from "../../redux/action/Annotation";
 
 type AnnotatorNodeProps = {
     images: Image[];
     annotations: Annotation[];
     submitAddAnnotation(_: Annotation): void;
+    submitUpdateAnnotation(_: Annotation): void;
 };
 
 const ConnectedAnnotatorNode = (props: AnnotatorNodeProps) => {
-    return <Canvas images={props.images} annotations={props.annotations} addAnnotation={props.submitAddAnnotation} />;
+    return <Canvas images={props.images} annotations={props.annotations} addAnnotation={props.submitAddAnnotation} updateAnnotation={props.submitUpdateAnnotation}/>;
 };
 
 const mapStateToProps = (state: State) => {
@@ -26,7 +27,8 @@ const mapStateToProps = (state: State) => {
 
 const mapDispatchToProps = (dispatch: Dispatch) => {
     return {
-        submitAddAnnotation: (annotation: Annotation) => dispatch(addAnnotation(annotation))
+        submitAddAnnotation: (annotation: Annotation) => dispatch(addAnnotation(annotation)),
+        submitUpdateAnnotation: (annotation: Annotation) => dispatch(updateAnnotation(annotation))
     };
 };
 
