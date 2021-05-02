@@ -3,14 +3,16 @@ import { fabric } from 'fabric';
 import { FabricJSCanvas, useFabricJSEditor } from 'fabricjs-react';
 import { Annotation } from "../../types/dataset/Annotation";
 import { Image } from "../../types/dataset/Image";
-import CanvasButtons from "./CanvasButtons";
 import { Object } from "fabric/fabric-impl";
 import { createRectangle } from "../../types/canvas/Rectangle";
 import { createCircle } from "../../types/canvas/Circle";
 import { nextAnnotationID } from "../../types/dataset/Annotation";
+import CanvasButtons from "./CanvasButtons";
 
-const DEFAULT_WIDTH = 50;
-const DEFAULT_HEIGHT = 50;
+const DEFAULT_BBOX_WIDTH = 50;
+const DEFAULT_BBOX_HEIGHT = 50;
+const DEFAULT_CANVAS_WIDTH = 500;
+const DEFAULT_CANVAS_HEIGHT = 500;
 
 type CanvasProps = {
     images: Image[];
@@ -36,21 +38,22 @@ const Canvas = (props: CanvasProps) => {
 
     const addBoundingBox = (annotation: Annotation) => {
         if (editor) {
+            const image: Image = props.images[imageIndex];
             const rectangle = createRectangle(
                 nextAnnotationID(props.annotations),
-                annotation.bbox[0],
-                annotation.bbox[1],
-                annotation.bbox[2],
-                annotation.bbox[3]
+                (Math.min(image.width, DEFAULT_CANVAS_WIDTH) / image.width) * annotation.bbox[0],
+                (Math.min(image.width, DEFAULT_CANVAS_WIDTH) / image.width) * annotation.bbox[1],
+                (Math.min(image.width, DEFAULT_CANVAS_WIDTH) / image.width) * annotation.bbox[2],
+                (Math.min(image.width, DEFAULT_CANVAS_WIDTH) / image.width) * annotation.bbox[3]
             );
             const update = (e: fabric.IEvent) => {
                 props.updateAnnotation({
                     ...annotation,
                     bbox: [
-                        e.target?.left || ((editor.canvas.width || 0) - DEFAULT_WIDTH) / 2,
-                        e.target?.top || ((editor.canvas.height || 0) - DEFAULT_HEIGHT) / 2,
-                        (e.target?.width || DEFAULT_WIDTH) * (e.target?.scaleX || 1),
-                        (e.target?.height || DEFAULT_HEIGHT) * (e.target?.scaleY || 1)
+                        e.target?.left || ((editor.canvas.width || 0) - DEFAULT_BBOX_WIDTH) / 2,
+                        e.target?.top || ((editor.canvas.height || 0) - DEFAULT_BBOX_HEIGHT) / 2,
+                        (e.target?.width || DEFAULT_BBOX_WIDTH) * (e.target?.scaleX || 1),
+                        (e.target?.height || DEFAULT_BBOX_HEIGHT) * (e.target?.scaleY || 1)
                     ]
                 });
             };
@@ -66,13 +69,13 @@ const Canvas = (props: CanvasProps) => {
                 id: nextAnnotationID(props.annotations),
                 image_id: props.images[imageIndex]?.id || 0,
                 category_id: 0,
-                area: DEFAULT_WIDTH * DEFAULT_HEIGHT,
+                area: DEFAULT_BBOX_WIDTH * DEFAULT_BBOX_HEIGHT,
                 iscrowd: 0,
                 bbox: [
-                    ((editor.canvas.width || 0) - DEFAULT_WIDTH) / 2,
-                    ((editor.canvas.height || 0) - DEFAULT_HEIGHT) / 2,
-                    DEFAULT_WIDTH,
-                    DEFAULT_HEIGHT
+                    ((editor.canvas.width || 0) - DEFAULT_BBOX_WIDTH) / 2,
+                    ((editor.canvas.height || 0) - DEFAULT_BBOX_HEIGHT) / 2,
+                    DEFAULT_BBOX_WIDTH,
+                    DEFAULT_BBOX_HEIGHT
                 ],
                 segmentation: []
             };
@@ -100,12 +103,67 @@ const Canvas = (props: CanvasProps) => {
         }
     };
 
+    const isHorizontal = (image: Image) => {
+        return image.width > image.height;
+    }
+
+    const isVertical = (image: Image) => {
+        return image.height > image.width;
+    };
+
+    const computeDisplacementX = (image: Image): number => {
+        if (isHorizontal(image)) {
+            if (image.width > DEFAULT_CANVAS_WIDTH) {
+                return 0;
+            }
+        }
+        return ((Math.min(image.width, DEFAULT_CANVAS_WIDTH)) - (computeScaleX(image) * image.width)) / 2;
+    };
+
+    const computeDisplacementY = (image: Image): number => {
+        return 0;
+        // if (isVertical(image)) {
+        //     if (image.height > DEFAULT_CANVAS_HEIGHT) {
+        //         return 0;
+        //     }
+        // }
+        // return (DEFAULT_CANVAS_HEIGHT - (computeScaleY(image) * image.height)) / 2;
+    };
+
+    const computeScaleX = (image: Image): number => {
+        if (isHorizontal(image)) {
+            if (image.width > DEFAULT_CANVAS_WIDTH) {
+                return DEFAULT_CANVAS_WIDTH / image.width
+            }
+            return 1;
+        }
+        return DEFAULT_CANVAS_HEIGHT / image.height;
+    };
+
+    const computeScaleY = (image: Image): number => {
+        if (isVertical(image)) {
+            if (image.height > DEFAULT_CANVAS_HEIGHT) {
+                return DEFAULT_CANVAS_HEIGHT / image.height;
+            }
+            return 1;
+        }
+        return computeScaleX(image);
+    };
+
     const loadImage = () => {
         if (editor?.canvas && props.images.length > imageIndex) {
             const image: Image = props.images[imageIndex];
-            editor.canvas.setWidth(image.width);
-            editor.canvas.setHeight(image.height);
-            editor.canvas.setBackgroundImage(image.coco_url, editor.canvas.renderAll.bind(editor.canvas));
+            editor.canvas.setWidth(Math.min(image.width, DEFAULT_CANVAS_WIDTH));
+            editor.canvas.setHeight(DEFAULT_CANVAS_HEIGHT);
+            editor.canvas.setBackgroundImage(image.coco_url, editor.canvas.renderAll.bind(editor.canvas), {
+                originX: 'left',
+                originY: 'top',
+                left: computeDisplacementX(image),
+                top: computeDisplacementY(image),
+                scaleX: computeScaleX(image),
+                scaleY: computeScaleY(image)
+            });
+            console.log(image.coco_url);
         }
     };
 
